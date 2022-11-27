@@ -1,104 +1,102 @@
-<!-- Crear una página HTML con el siguiente formulario para tramitar las compras de
-una frutería virtual.
-El botón “ENVIAR DATOS” debe invocar la página “factura.php” que debe mostrar los
-siguientes datos:
-El cálculo del importe se hará en base a las siguientes reglas: El Kilo de Judías vale 2€,
-el de garbanzos vale 2’5€, y el de lentejas vale 1’25€. Si la unidades es mayor de 10
-kilos se aplica un descuento del 2%, y si es mayor de 50 Kilos se aplica un descuento
-del 10%. Adicionalmente, si el pago se realiza con tarjeta VISA, se aplica un descuento
-adicional del 5%. 
-Convertir array a string si es necesario.
-Guardar los datos en un array y sumarlos segun producto para mostrar precio  y unidades final
-Mostrar en pantalla producto, unidades, visa si/no, importe.
--->
-
 <?php
 // Definir $verdura, que puede ser judias, garbanzos o lentejas.
 
 // Declarar variables
-$verdura = [];
-$cantidad = [];
-$visa = [];
+$verdura = 0;
+$cantidad = 0;
+
+// $visa puede ser SI o No.
+$visa = "";
 $importe = 0;
+$total = 0;
 $descuento = 0;
 $descuento2 = 0;
 $descuento3 = 0;
+
+$verduraErr = "";
+$cantidadErr1 = "";
+$cantidadErr2 = "";
 
 // Validar datos
 if ($_SERVER["REQUEST_METHOD"] == "POST") // Si se ha enviado el formulario
 {
     // Validar verdura
-    if (isset($_POST["verdura"])) {
-        $verdura = $_POST["verdura"];
+    if (!isset($_POST["verdura"])) { // Si se ha seleccionado verdura
+        echo $verduraErr = "No ha seleccionado ninguna verdura" . "<br>";
     } else {
-        $verdura = [];
+        $verdura = $_POST["verdura"]; // Guardar verdura
     }
 
     // Validar cantidad
-    if (isset($_POST["cantidad"])) {
-        $cantidad = $_POST["cantidad"];
+    $cantidad = $_POST["cantidad"]; // Guardar cantidad
+    if (!isset($_POST["cantidad"])) { // Si se ha introducido cantidad
+        echo $cantidadErr1 = "No ha introducido ninguna cantidad" . "<br>";
+    } elseif (!is_numeric($cantidad) || ($cantidad <= 0)) {
+        echo $cantidadErr2 = "La cantidad debe ser un número" . "<br>";
     } else {
-        $cantidad = [];
+        $cantidad = $_POST["cantidad"]; // Guardar cantidad
     }
-  
+
     // Recoger datos del formulario
-    $verdura = $_POST["verdura"];
-    $cantidad = $_POST["cantidad"];
-    $visa = $_POST["visa"] ?? "";
-}
+    $verdura = $_POST["verdura"] ?? ""; // Si no se ha seleccionado verdura, se asigna un valor vacío
+    $cantidad = $_POST["cantidad"] ?? ""; // Si no se ha introducido cantidad, se asigna un valor vacío
+    $visa = $_POST["visa"] ?? "NO"; // Si no se ha seleccionado visa, se asigna un valor NO
 
-// Calcular importe
-if (isset($verdura) && isset($cantidad)) {
-    for ($i = 0; $i < count($verdura); $i++) {
-        if ($verdura[$i] == "judias") {
-            $importe += $cantidad[$i] * 2;
-        } elseif ($verdura[$i] == "garbanzos") {
-            $importe += $cantidad[$i] * 2.5;
-        } elseif ($verdura[$i] == "lentejas") {
-            $importe += $cantidad[$i] * 1.25;
+
+    // Calcular importe
+    if (isset($verdura) && isset($cantidad)) {
+
+        if ($verdura == "judias") {
+            $importe = $cantidad * 1.5;
+        } elseif ($verdura == "garbanzos") {
+            $importe = $cantidad * 1.8;
+        } elseif ($verdura == "lentejas") {
+            $importe = $cantidad * 2;
         }
-    }
-}
 
-// Calcular descuento
-if (isset($cantidad)) {
-    for ($i = 0; $i < count($cantidad); $i++) {
-        if ($cantidad[$i] > 10) {
-            $descuento = $importe * 0.02;
-        } elseif ($cantidad[$i] > 50) {
+        // Calcular descuento
+        if ($cantidad >= 10) {
             $descuento = $importe * 0.1;
+        } elseif ($cantidad >= 20) {
+            $descuento = $importe * 0.2;
+        } elseif ($cantidad >= 30) {
+            $descuento = $importe * 0.3;
+        }
+
+        // Calcular descuento2
+        if ($visa == "on") {
+            $descuento2 = $importe * 0.05;
+        }
+
+        // Calcular descuento3
+        if (isset($verdura) && $cantidad >= 10) {
+            $descuento3 = $importe * 0.05;
+        }
+        if ($cantidad >= 20) {
+            $descuento3 = $importe * 0.05;
+        }
+        if ($cantidad >= 30) {
+            $descuento3 = $importe * 0.05;
+        }
+
+        // Calcular total
+        $total = $importe - $descuento - $descuento2 - $descuento3;
+
+
+
+        // Mostrar datos
+        if (isset($verdura) && isset($cantidad)) {
+
+            echo "*********************" . "<br>";
+            echo "FACTURA <br>";
+            echo "Producto: " . $verdura . "<br>";
+            echo "Unidades: " . $cantidad . "<br>";
+            echo "Visa: " . $visa . "<br>";
+            echo "Importe: " . $total . "<br>";
+            echo "*********************";
+
+        } else {
+            echo "No se ha enviado el formulario porque no estaba completo";
         }
     }
 }
-
-// Calcular descuento2
-if (isset($visa)) {
-    if ($visa == true) {
-        $descuento2 = $importe * 0.05;
-    } else {
-        $descuento2 = 0;
-    }
-}
-
-// Calcular descuento3
-$descuento3 = $descuento + $descuento2;
-
-// Calcular importe final
-$importeFinal = $importe - $descuento3;
-
-// Mostrar datos
-foreach ($verdura as $key => $value) {
-    echo "Producto: " . $value . "<br>";
-    echo "Unidades: " . $cantidad[$key] . "<br>";
-  // Validar visa
-  if (isset($_POST["visa"])) {
-    $visa = $_POST["visa"];
-    echo "VISA: SI" . "<br>";
-} else {
-    $visa = "";
-    echo "VISA: NO" . "<br>";
-}
-    echo "Importe: " . $importeFinal . "<br>";
-    
-}
-?>
